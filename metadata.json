@@ -1,0 +1,6 @@
+{
+  "name": "Ops Ledger Suite",
+  "description": "An automated document-parsing ledger suite built with Gemini. Optimized for Neha to easily capture, tweak, and ledger receipt expenditures.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
