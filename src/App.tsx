@@ -65,7 +65,7 @@ export default function App() {
   const [ledger, setLedger] = useState<LedgerItem[]>([]);
   
   // Database State configuration
-  const [useSupabaseDB, setUseSupabaseDB] = useState<boolean>(false);
+  const [useSupabaseDB, setUseSupabaseDB] = useState<boolean>(true);
   const [supabaseErrorMsg, setSupabaseErrorMsg] = useState<string | null>(null);
   const [sqlCopied, setSqlCopied] = useState<boolean>(false);
   const [dbLoading, setDbLoading] = useState<boolean>(false);
@@ -75,20 +75,12 @@ export default function App() {
     // Get current user session
     supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
       setUser(currentUser);
-      if (currentUser) {
-        setUseSupabaseDB(true);
-      }
     });
 
     // Monitor Auth State Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      if (currentUser) {
-        setUseSupabaseDB(true);
-      } else {
-        setUseSupabaseDB(false);
-      }
     });
 
     return () => {
@@ -98,7 +90,7 @@ export default function App() {
 
   // Fetch or trigger fallback
   useEffect(() => {
-    if (useSupabaseDB && user) {
+    if (useSupabaseDB) {
       fetchLedgerFromSupabase();
     } else {
       // Load offline presets & localStorage
@@ -191,22 +183,23 @@ export default function App() {
 
   // Sync state mutation helper
   const syncLedgerMutation = async (newItem: LedgerItem, action: "insert" | "delete") => {
-    if (useSupabaseDB && user) {
+    if (useSupabaseDB) {
       try {
         if (action === "insert") {
-          // If the user is logged in, insert to live Supabase DB
+          // Prepare payload to insert in live Supabase DB
+          const insertPayload: any = {
+            id: newItem.id,
+            vendor: newItem.vendor,
+            amount: newItem.amount,
+            category: newItem.category,
+            invoice_date: newItem.invoice_date,
+          };
+          if (user?.id) {
+            insertPayload.user_id = user.id;
+          }
           const { error: dbError } = await supabase
             .from("ledger")
-            .insert([
-              {
-                id: newItem.id,
-                vendor: newItem.vendor,
-                amount: newItem.amount,
-                category: newItem.category,
-                invoice_date: newItem.invoice_date,
-                user_id: user.id
-              }
-            ]);
+            .insert([insertPayload]);
           if (dbError) throw dbError;
           // Optimistic local state load representation
           setLedger([newItem, ...ledger]);
@@ -500,10 +493,10 @@ create policy "Users can modify their own ledger items."
               <div className="flex-1">
                 <h3 className="font-bold text-slate-900 text-sm">Database Setup Required in Supabase</h3>
                 <p className="text-xs text-slate-600 mt-1 leading-normal">
-                  You are successfully authenticated using Supabase Auth! However, the <strong className="text-slate-900">ledger</strong> table has not been initialized in your Supabase project databases yet. 
+                  Your Supabase credentials are connected! However, the <strong className="text-slate-900">ledger</strong> table has not been initialized in your Supabase project database yet.
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  We are automatically falling back to secure Local Storage state so you don't lose progress. To enable live cloud sync, paste the SQL schema below in the Supabase SQL Editor.
+                  We are currently falling back to secure Local Storage state so you don't lose progress. To enable live cloud sync, paste the SQL schema below in the Supabase SQL Editor.
                 </p>
               </div>
             </div>
