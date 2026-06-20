@@ -20,7 +20,7 @@ app.post('/api/parse-receipt', async (req, res) => {
     }
 
     // Fallback securely to the provided OpenRouter API key if not configured in environmental variables
-    const apiKey = process.env.OPENROUTER_API_KEY 
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
     const prompt = `Please extract receipt details from the raw text provided. Extract the vendor name, the total amount as a float/number, the category (must strictly classify into one of: Logistics, Marketing, Software, or Office Supplies), and the invoice date formatted strictly as YYYY-MM-DD.
 
